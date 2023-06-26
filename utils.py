@@ -12,7 +12,7 @@ def argmax_2d(matrix):
     return index_2d
 
 
-def touple_to_vector(vertices):
+def tuple_to_vector(vertices):
     a, b = vertices
     return [b[0] - a[0], b[1] - a[1]]
 
