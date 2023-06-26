@@ -1,8 +1,4 @@
-# Press Shift+F10 to execute it or replace it with your code.
-import cv2 as cv
-import numpy as np
 from utils import *
-from argparse import ArgumentParser
 
 
 # BRIGHTEST PATCH CALCULATION FUNCTIONS
@@ -70,6 +66,9 @@ def calc_brightness_image(integral_image, patch_size):
 
 
 def find_max_patch(brightness_image):
+    """
+    return the patch with max brightness in the given brightness image
+    """
     return argmax_2d(brightness_image)
 
 
@@ -131,15 +130,24 @@ def find_max_patches(im, num_patches, patch_size):
 # FINDING QUADRILATERAL AND IT'S AREA FUNCTIONS
 
 def is_line(edge_mat):
+    """
+    decides if the given cross product matrix indicates the 4 points forming a line
+    """
     return np.all(edge_mat == 0)
 
 
 def is_triangle(cross_mat):
+    """
+    decides if the given cross product matrix indicates the 4 points forming a tirangle
+    """
     zero_cells = np.where(cross_mat == 0)
     return len(zero_cells[0]) > 6
 
 
 def calc_triangle_area(cross_matrix, index):
+    """
+    return the area of a triangle formed by the vertices indicated by the given index
+    """
     return abs(cross_matrix[index] / 2)
 
 
@@ -177,18 +185,24 @@ def is_opposite_side(edge, points):
     """
     a, c = edge
     b, d = points
-    ac = touple_to_vector([a, c])
-    ab = touple_to_vector([a, b])
-    ad = touple_to_vector([a, d])
+    ac = tuple_to_vector([a, c])
+    ab = tuple_to_vector([a, b])
+    ad = tuple_to_vector([a, d])
 
     return (cross_product_2d(ac, ab) * cross_product_2d(ac, ad)) < 0
 
 
 def is_not_self_intersecting(quad):
+    """
+    decides if a given order of vertices make a self-intersecting quadrilateral
+    """
     return is_opposite_side([quad[0], quad[2]], [quad[1], quad[3]])
 
 
 def find_line(corners):
+    """
+    returns the area and the order of vertices to be drawn
+    """
     return 0, corners
 
 
@@ -242,8 +256,8 @@ def fill_cross_mat(map):
     cross_mat = np.zeros((6, 6))  # 6 candidate edges for the quadrilateral
     for i in range(cross_mat.shape[0]):
         for j in range(cross_mat.shape[1]):
-            edge_i = touple_to_vector(map[i])
-            edge_j = touple_to_vector(map[j])
+            edge_i = tuple_to_vector(map[i])
+            edge_j = tuple_to_vector(map[j])
             cross_mat[i, j] = cross_product_2d(edge_i, edge_j)
     return cross_mat
 
@@ -268,27 +282,3 @@ def find_area(corners):
         return find_triangle(vertex_map, cross_mat)
     else:
         return find_quadrilateral(corners)
-
-
-if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument("--input_image", default='', help="path to the input image")
-    parser.add_argument("--patch_size", default=[5, 5], help="patch size")
-    opt = parser.parse_args()
-
-    # Read input image
-    inp = cv.imread(opt.input_image, cv.IMREAD_GRAYSCALE)
-
-    # Check if the image size is too small
-    if inp.shape[0] < opt.patch_size[0] * 4 or inp.shape[1] < opt.patch_size[1] * 4:
-        raise ValueError("Image size is too small.")
-
-    # Find corners of maximum patches
-    corners = find_max_patches(inp, 4, opt.patch_size)
-
-    # Calculate area and order of vertices
-    area, vertices = find_area(corners)
-    print("The center of the brightest patches span an area of:", area, "in pixels scale.")
-
-    # Draw the quadrilateral on the input image
-    draw(inp, vertices)
